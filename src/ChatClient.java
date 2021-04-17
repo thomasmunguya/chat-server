@@ -1,11 +1,9 @@
-import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 
 public class ChatClient {
     private  String host;
@@ -13,7 +11,8 @@ public class ChatClient {
     private String id;
     private InetSocketAddress address;
     private SocketChannel clientSC;
-    private StringBuilder chat;
+    private static StringBuilder chat;
+    private boolean loggedIn;
 
     /**
      * Construcs a ChatClient
@@ -62,23 +61,25 @@ public class ChatClient {
      * Logs a client in
      */
     public void login() {
+        loggedIn = true;
         chat = new StringBuilder();
         address = new InetSocketAddress(host, port);
         try {
             clientSC = SocketChannel.open(address);
+            send(id + " logged in");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        log(id + ": logged in");
+
     }
 
     /**
      * Logs out a client
      */
     public void logout() {
-        log(id + ": logged out");
+        loggedIn = false;
         try {
-            clientSC.close();
+            send(id + " logged out");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -92,27 +93,22 @@ public class ChatClient {
         byte[] mArray = (req).getBytes();
         ByteBuffer buffer = ByteBuffer.wrap(mArray);
         clientSC.write(buffer);
-//        log(id + ": " + req);
+//        log(req);
         buffer.clear();
     }
 
-    public void receiveBroadCast() {
-
+    public void receive() {
         try{
-            Socket sock = new Socket(host, port);
-            BufferedReader receive = new BufferedReader(new InputStreamReader(sock.getInputStream()));//get inputstream
-            String msgReceived = null;
-            while((msgReceived = receive.readLine())!= null)
-            {
-                System.out.println("From Server: " + msgReceived);
-                chat.append(msgReceived);
-//                System.out.println("Please enter something to send to server..");
-            }
-        }catch(Exception e){System.out.println(e.getMessage());}
+            ByteBuffer buffer = ByteBuffer.allocate(256);
+            clientSC.read(buffer);
+            String result = new String(buffer.array()).trim();
+            chat.append(result + "\n");
+        }catch(Exception e){
+                System.out.println(e.getMessage());
+        }
     }
 
     private void log(String str) {
-        chat.append(str + "\n");
         System.out.println(str);
     }
 
@@ -121,7 +117,6 @@ public class ChatClient {
      * @return
      */
     public String getChatView() {
-        return "=== id chat";
-//       return "=== id chat view\n" + chat.toString();
+       return "=== " + id + " chat view\n" + chat.toString();
     }
 }

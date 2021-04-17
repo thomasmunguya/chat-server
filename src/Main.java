@@ -31,10 +31,9 @@ public class Main {
         });
         es.shutdown();
         s.stopServer();
-        System.out.println("\n=== Server log ===");
-        System.out.println(s.getServerLog());
-//        ctasks.forEach(t -> System.out.println(
-//                t.getClient().getChatView()));
-        System.out.println(ctasks.get(0).getClient().getChatView());
+//        System.out.println("\n=== Server log ===");
+//        System.out.println(s.getServerLog());
+        ctasks.forEach(t -> System.out.println(
+                t.getClient().getChatView()));
     }
 }

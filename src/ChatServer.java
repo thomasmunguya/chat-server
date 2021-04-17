@@ -1,10 +1,12 @@
-import java.io.IOException;
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.Set;
@@ -17,6 +19,7 @@ public class ChatServer implements Runnable {
     private boolean running;
     private static final StringBuilder sbLog = new StringBuilder();
     private Selector selector;
+    private SocketChannel clientSC;
 
     /**
      * Constructs a ChatServer
@@ -73,7 +76,7 @@ public class ChatServer implements Runnable {
     public static void main(String[] args) throws IOException {
         ChatServer chatServer = new ChatServer("localhost", 9999);
         chatServer.startServer();
-        new Thread(chatServer).start();
+//        new Thread(chatServer).start();
     }
 
     private void log(String str) {
@@ -101,8 +104,6 @@ public class ChatServer implements Runnable {
             int ops = socket.validOps();
             SelectionKey selectKy = socket.register(selector, ops, null);
 
-            log("Server Started");
-
             // Keep server running as until stopped by user
 //            System.out.println("Server is running: " + running);
             while (running) {
@@ -129,15 +130,14 @@ public class ChatServer implements Runnable {
 
                         // Tests whether this key's channel is ready for reading
                     } else if (myKey.isReadable()) {
-
                         SocketChannel client = (SocketChannel) myKey.channel();
                         ByteBuffer buffer = ByteBuffer.allocate(256);
                         client.read(buffer);
                         String result = new String(buffer.array()).trim();
-//                        broadcast(result);
                         if(!result.equals("")) {
                             sbLog.append(Calendar.HOUR + ":" + Calendar.MINUTE + ":" + Calendar.SECOND +
                                     " . " + Calendar.MILLISECOND + " " + result + "\n");
+                            broadcast(result + "\n", client);
                         }
 
                     }
@@ -149,15 +149,11 @@ public class ChatServer implements Runnable {
         }
     }
 
-    private void broadcast(String msg) throws IOException {
-        ByteBuffer msgBuf=ByteBuffer.wrap(msg.getBytes());
-        for(SelectionKey key : selector.keys()) {
-            if(key.isValid() && key.channel() instanceof SocketChannel) {
-                SocketChannel sch=(SocketChannel) key.channel();
-                sch.write(msgBuf);
-                msgBuf.rewind();
-            }
-        }
+    private void broadcast(String msg , SocketChannel sc) throws IOException {
+        byte[] mArray = (msg).getBytes();
+        ByteBuffer buffer = ByteBuffer.wrap(mArray);
+        sc.write(buffer);
+        buffer.clear();
     }
 
     public String getServerLog() {

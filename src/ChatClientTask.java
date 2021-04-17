@@ -84,8 +84,8 @@ public class ChatClientTask implements Runnable {
 //                byte[] mArray = new String(m).getBytes();
 //                ByteBuffer buffer = ByteBuffer.wrap(mArray);
 //                clientSC.write(buffer);
-                client.send(message);
-//                client.receiveBroadCast();
+                client.send(client.getId() + ": " + message);
+                client.receive();
 //                log(client.getId() + ": " + m);
 //                buffer.clear();
 //                System.out.println(Thread.currentThread().getName());
